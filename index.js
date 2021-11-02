@@ -19,12 +19,11 @@ app.engine('hbs', handlebars({
     layoutsDir: __dirname + '/views/layouts',
     extname: 'hbs',
     defaultLayout: 'index',
-    //new configuration parameter
     partialsDir: __dirname + '/views/partials/'
     }));
 
 //Serves static files (we need it to import a css file)
-app.use(express.static('public'))
+app.use(express.static('public'));
 
 //Serves the body of the page aka "main.hbs" to the container "index.hbs"
 app.get('/', (req, res) => {
@@ -56,7 +55,21 @@ app.get('/users/:userId/', function (req, res){
           res.render('singleUser', {layout: 'index', user});
   	}else{ // if it doesn't exist then the user doesn't exist, send this message:
   		res.send("No such user!\n");
-  	}
+    }
+});
+
+app.get('/users/:userId/', function (req, res){
+    // check that the parameter value has a match as an array value in the users
+    // section of the JSON file
+    let ID = parseInt(req.params.userId);
+    const hasValue = usrData.includes(usrData[ID]);
+    let user = usrData[ID];
+        if(hasValue){ // if the match exists, respond with the associated JSON payload
+            //res.json(myData.users[req.params.userId]);
+            res.render('singleUser', {layout: 'index', user});
+        }else{ // if it doesn't exist then the user doesn't exist, send this message:
+            res.send("No such user!\n");
+        }
 });
 
 //Makes the app listen to port 3000
