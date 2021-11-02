@@ -58,18 +58,18 @@ app.get('/users/:userId/', function (req, res){
     }
 });
 
-app.get('/users/:userId/', function (req, res){
+app.get('/users/:userId/schedules', function (req, res){
     // check that the parameter value has a match as an array value in the users
     // section of the JSON file
     let ID = parseInt(req.params.userId);
-    const hasValue = usrData.includes(usrData[ID]);
-    let user = usrData[ID];
-        if(hasValue){ // if the match exists, respond with the associated JSON payload
-            //res.json(myData.users[req.params.userId]);
-            res.render('singleUser', {layout: 'index', user});
-        }else{ // if it doesn't exist then the user doesn't exist, send this message:
-            res.send("No such user!\n");
-        }
+    
+    let scheduleInfo = schedData.filter(obj => {return ID == obj.user_id});
+	if(scheduleInfo.length === 0){
+		res.send("No schedule info for this user!\n")
+	}else{
+		res.render('singleSched', {layout: 'index', scheduleInfo});
+        console.log("attempted render. ScheduleInfo: " + scheduleInfo + " ID: " + ID);
+	}
 });
 
 //Makes the app listen to port 3000
