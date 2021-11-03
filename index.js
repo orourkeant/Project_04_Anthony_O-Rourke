@@ -1,5 +1,9 @@
 //Loads the express module
 const express = require('express');
+
+const bodyParser = require("body-parser");
+// Create application/x-www-form-urlencoded parser
+const urlencodedParser = bodyParser.urlencoded({ extended: false });
 //Creates our express server
 const app = express();
 const port = 3000;
@@ -10,6 +14,8 @@ const schedData = myData.schedules; //Create a schedule data object from the jso
 
 //Loads the handlebars module
 const handlebars = require('express-handlebars');
+
+//app.enable('strict routing');
 
 //Sets our app to use the handlebars engine
 app.set('view engine', 'hbs');
@@ -24,6 +30,7 @@ app.engine('hbs', handlebars({
 
 //Serves static files (we need it to import a css file)
 app.use(express.static('public'));
+app.use(urlencodedParser);
 
 //Serves the body of the page aka "main.hbs" to the container "index.hbs"
 app.get('/', (req, res) => {
@@ -37,14 +44,14 @@ app.get('/users', (req, res) => {
     res.render('userList', {layout: 'index', usrData});
 });
 
-//Serves the body of the page aka ".hbs" to the container "index.hbs"
+//Serves the body of the page aka "schedList.hbs" to the container "index.hbs"
 app.get('/schedules', (req, res) => {
     //Using the index.hbs file
     res.render('schedList', {layout: 'index', schedData});
 });
 
 //Handle individual user routes if they exist, send error message if not...
-app.get('/users/:userId/', function (req, res){
+app.get('/users/:userId', function (req, res){
 	// check that the parameter value has a match as an array value in the users
 	// section of the JSON file
     let ID = parseInt(req.params.userId);
@@ -70,6 +77,18 @@ app.get('/users/:userId/schedules', function (req, res){
 		res.render('singleSched', {layout: 'index', scheduleInfo});
         console.log("attempted render. ScheduleInfo: " + scheduleInfo + " ID: " + ID);
 	}
+});
+
+app.get('/schedules/new', function(req, res){
+    //set up a template to display a form schedForm.hbs
+    res.render('schedForm', {layout: 'index'});
+});
+
+app.post('/schedules/new', urlencodedParser, function (req, res) {
+	console.log("Post data: ", req.body);
+    console.log("User ID: " + req.body.user_id)
+    schedData.push(req.body);	
+    res.redirect('/schedules/new');
 });
 
 //Makes the app listen to port 3000
