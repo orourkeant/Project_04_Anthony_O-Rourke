@@ -50,21 +50,6 @@ app.get('/schedules', (req, res) => {
     res.render('schedList', {layout: 'index', schedData});
 });
 
-//Handle individual user routes if they exist, send error message if not...
-app.get('/users/:userId', function (req, res){
-	// check that the parameter value has a match as an array value in the users
-	// section of the JSON file
-    let ID = parseInt(req.params.userId);
-	const hasValue = usrData.includes(usrData[ID]);
-    let user = usrData[ID];
-  	if(hasValue){ // if the match exists, respond with the associated JSON payload
-  		//res.json(myData.users[req.params.userId]);
-          res.render('singleUser', {layout: 'index', user});
-  	}else{ // if it doesn't exist then the user doesn't exist, send this message:
-  		res.send("No such user!\n");
-    }
-});
-
 app.get('/users/:userId/schedules', function (req, res){
     // check that the parameter value has a match as an array value in the users
     // section of the JSON file
@@ -75,20 +60,47 @@ app.get('/users/:userId/schedules', function (req, res){
 		res.send("No schedule info for this user!\n")
 	}else{
 		res.render('singleSched', {layout: 'index', scheduleInfo});
-        console.log("attempted render. ScheduleInfo: " + scheduleInfo + " ID: " + ID);
 	}
 });
 
 app.get('/schedules/new', function(req, res){
-    //set up a template to display a form schedForm.hbs
     res.render('schedForm', {layout: 'index'});
 });
 
 app.post('/schedules/new', urlencodedParser, function (req, res) {
-	console.log("Post data: ", req.body);
-    console.log("User ID: " + req.body.user_id)
     schedData.push(req.body);	
     res.redirect('/schedules/new');
+});
+
+app.get('/users/new', function(req, res){
+    res.render('userForm', {layout: 'index'});
+});
+
+app.post('/users/new', function(req, res){
+    //handle the password encryption
+    let crypto = require('crypto');
+	const encryptPassword = crypto.createHash('sha256').update(req.body.password).digest('base64');
+	req.body.password = encryptPassword
+    //push the data 
+    usrData.push(req.body);
+    res.redirect('/users/new');
+});
+
+//Had to move the parameterised route underneath the new routes
+//Handle individual user routes if they exist, send error message if not...
+app.get('/users/:userId', function (req, res){
+	// check that the parameter value has a match as an array value in the users
+	// section of the JSON file
+    let ID = parseInt(req.params.userId);
+	const hasValue = usrData.includes(usrData[ID]);
+    let user = usrData[ID];
+    
+  	if(hasValue){ // if the match exists, respond with the associated JSON payload
+        res.render('singleUser', {layout: 'index', user});
+  	}else{ // if it doesn't exist then the user doesn't exist, send this message:
+  		res.send("No such user!\n");
+    }
+    
 });
 
 //Makes the app listen to port 3000
