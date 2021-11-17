@@ -1,1 +1,3 @@
-<p>First name: {{user.firstname}}<br>Last name: {{user.lastname}}<br>Email: {{user.email}}<br>Password: {{user.password}}</p>
+{{#each rows}}
+      <p>First name: {{this.first_name}}<br>Last name: {{this.last_name}}<br>Email: {{this.email}}<br>Password: {{this.password}}<br><br></p>
+    {{/each}}

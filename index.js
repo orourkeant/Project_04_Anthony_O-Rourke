@@ -26,7 +26,15 @@ connection.connect((err) => {
   if (err) throw err;
   console.log('DB Connected!');
 });
-
+/*
+//Get some output from the DB
+connection.query('SELECT * FROM users WHERE id = 1', (err,rows) => {
+    if(err) throw err;
+  
+    console.log('Data received from Db:');
+    console.log(rows);
+  });
+*/
 //Require the data JSON
 const myData = require('./data');
 const usrData = myData.users; //Create a users object from the json 
@@ -60,28 +68,29 @@ app.get('/', (req, res) => {
 
 //Serves the body of the page aka "userList.hbs" to the container "index.hbs"
 app.get('/users', (req, res) => {
-    //Using the index.hbs file
-    res.render('userList', {layout: 'index', usrData});
+    
+    connection.query('SELECT first_name, last_name, email, password FROM users ORDER BY id;', (err,rows) => {
+        if(err) throw err;
+            //Using the index.hbs file
+        res.render('userList', {layout: 'index', rows});
+    });
+    
 });
 
 //Serves the body of the page aka "schedList.hbs" to the container "index.hbs"
 app.get('/schedules', (req, res) => {
-    //Using the index.hbs file
-    res.render('schedList', {layout: 'index', schedData});
+    
+    connection.query('SELECT user_id, day, start_time, end_time FROM schedules order by user_id;', (err,rows) => {
+        if(err) throw err;
+            //Using the index.hbs file
+            console.log(rows);
+            res.render('schedList', {layout: 'index', rows});
+    });
+    
+    
 });
 
-app.get('/users/:userId/schedules', function (req, res){
-    // check that the parameter value has a match as an array value in the users
-    // section of the JSON file
-    let ID = parseInt(req.params.userId);
-    
-    let scheduleInfo = schedData.filter(obj => {return ID == obj.user_id});
-	if(scheduleInfo.length === 0){
-		res.send("No schedule info for this user!\n")
-	}else{
-		res.render('singleSched', {layout: 'index', scheduleInfo});
-	}
-});
+
 
 app.get('/schedules/new', function(req, res){
     res.render('schedForm', {layout: 'index'});
@@ -109,17 +118,34 @@ app.post('/users/new', function(req, res){
 //Had to move the parameterised route underneath the new routes
 //Handle individual user routes if they exist, send error message if not...
 app.get('/users/:userId', function (req, res){
-	// check that the parameter value has a match as an array value in the users
-	// section of the JSON file
-    let ID = parseInt(req.params.userId);
-	const hasValue = usrData.includes(usrData[ID]);
-    let user = usrData[ID];
+	
+	let ID = parseInt(req.params.userId);
+
+    connection.query('SELECT first_name, last_name, email, password FROM users WHERE id = ?;', ID, (err,rows) => {
+        if(err)throw err;
+            
+        
+            // if(rows['0'].first_name === ''){
+            //     console.log('No data from the DB');
+            // }
+            
+            res.render('singleUser', {layout: 'index', rows});
+    });
     
-  	if(hasValue){ // if the match exists, respond with the associated JSON payload
-        res.render('singleUser', {layout: 'index', user});
-  	}else{ // if it doesn't exist then the user doesn't exist, send this message:
-  		res.send("No such user!\n");
-    }
+});
+
+app.get('/users/:userId/schedules', function (req, res){
+    // check that the parameter value has a match as an array value in the users
+    // section of the JSON file
+    let ID = parseInt(req.params.userId);
+
+    connection.query('SELECT user_id, day, start_time, end_time FROM schedules WHERE user_id = ?;', ID, (err,rows) => {
+        if(err) throw err;
+            //Using the index.hbs file
+            console.log(rows);
+            res.render('singleSched', {layout: 'index', rows});
+    });
+
     
 });
 
