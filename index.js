@@ -1,8 +1,14 @@
 //Loads the express module
 const express = require('express');
 
+//Require .env
+require('dotenv').config();
+
 //Require bodyparser
 const bodyParser = require("body-parser");
+
+//Require validator for validating form data
+const validator = require('validator');
 
 // Create application/x-www-form-urlencoded parser
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
@@ -10,9 +16,6 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 //Creates our express server
 const app = express();
 const port = 3000;
-
-//Require .env
-require('dotenv').config();
 
 //Setup the DB
 const mysql = require('mysql2');
@@ -26,15 +29,7 @@ connection.connect((err) => {
   if (err) throw err;
   console.log('DB Connected!');
 });
-/*
-//Get some output from the DB
-connection.query('SELECT * FROM users WHERE id = 1', (err,rows) => {
-    if(err) throw err;
-  
-    console.log('Data received from Db:');
-    console.log(rows);
-  });
-*/
+
 //Require the data JSON
 const myData = require('./data');
 const usrData = myData.users; //Create a users object from the json 
@@ -85,9 +80,7 @@ app.get('/schedules', (req, res) => {
             //Using the index.hbs file
             console.log(rows);
             res.render('schedList', {layout: 'index', rows});
-    });
-    
-    
+    });  
 });
 
 
@@ -97,8 +90,16 @@ app.get('/schedules/new', function(req, res){
 });
 
 app.post('/schedules/new', urlencodedParser, function (req, res) {
-    schedData.push(req.body);	
+    //schedData.push(req.body);	
+    console.log(req.body);
     res.redirect('/schedules/new');
+    /* *** Waiting to overcome: 
+    01:35:33	INSERT INTO schedules ( user_id, day, start_time, end_time ) 
+    VALUES( 34, 4, '2021-11-04 12:00:00', '2021-11-04 15:00:00' )	Error Code: 1452. 
+    Cannot add or update a child row: a foreign key constraint fails (`incode_project_3`.`schedules`, 
+    CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))	0.147 sec
+    */
+
 });
 
 app.get('/users/new', function(req, res){
@@ -106,12 +107,31 @@ app.get('/users/new', function(req, res){
 });
 
 app.post('/users/new', function(req, res){
+    //Trim the input data
+    let fName = validator.trim(req.body.firstname);
+    let lName = validator.trim(req.body.lastname);
+    let email = validator.trim(req.body.email);
+    let pass = validator.trim(req.body.password);
+    
     //handle the password encryption
-    let crypto = require('crypto');
-	const encryptPassword = crypto.createHash('sha256').update(req.body.password).digest('base64');
-	req.body.password = encryptPassword
-    //push the data 
-    usrData.push(req.body);
+    const crypto = require('crypto');
+	const encryptPassword = crypto.createHash('sha256').update(pass).digest('base64');
+    
+    //Escape the name inputs
+    fName =validator.escape(fName);
+    lName = validator.escape(lName);
+
+    //If the email is valid, insert the new user to the DB
+    if(validator.isEmail(email)){
+        //Create an array for inserting the variables to the query
+        const records = [fName, lName, email, encryptPassword];
+            connection.query('INSERT INTO users (first_name, last_name, email, password) VALUES (?);', [records], (err,rows) => {
+                if(err) throw err;              
+                console.log(rows);
+            });
+    }
+    
+    //Redirect back to the get route
     res.redirect('/users/new');
 });
 
@@ -146,7 +166,7 @@ app.get('/users/:userId/schedules', function (req, res){
             res.render('singleSched', {layout: 'index', rows});
     });
 
-    
+
 });
 
 //Makes the app listen to port 3000
