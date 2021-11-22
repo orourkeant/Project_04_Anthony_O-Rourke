@@ -90,16 +90,39 @@ app.get('/schedules/new', function(req, res){
 });
 
 app.post('/schedules/new', urlencodedParser, function (req, res) {
-    //schedData.push(req.body);	
-    console.log(req.body);
-    res.redirect('/schedules/new');
-    /* *** Waiting to overcome: 
-    01:35:33	INSERT INTO schedules ( user_id, day, start_time, end_time ) 
-    VALUES( 34, 4, '2021-11-04 12:00:00', '2021-11-04 15:00:00' )	Error Code: 1452. 
-    Cannot add or update a child row: a foreign key constraint fails (`incode_project_3`.`schedules`, 
-    CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))	0.147 sec
-    */
+    //HTML time doesn't have seconds
+    let seconds = ':00';
+    let startTime = req.body.start_at.concat('', seconds);
+    let endTime = req.body.end_at.concat('', seconds);
+ 
+    // Need a Date Object to extract the day for DB table
+    let date = new Date(Date.parse(req.body.day));
 
+    //Pull the day from the date, add one due to zero-based indexing.
+    let day = date.getDay() + 1;
+
+    //Convert Date to ISOString and strip the time segment
+    let dateString = date.toISOString().slice(0, 11).replace('T', ' ');
+
+    //concat the dateString with the startTime
+    let startTimeISOString = dateString.concat('', startTime);
+    
+    //concat the dateString with the endTime
+    let endTimeISOString = dateString.concat('', endTime);
+
+    const records = [Number(req.body.user_id), day, startTimeISOString, endTimeISOString];
+    console.log('records: ', records);
+
+    console.log('Body: ', req.body);
+
+    connection.query('INSERT INTO schedules ( user_id, day, start_time, end_time ) VALUES (?);', [records], (err,rows) => {
+        if(err) throw err;              
+        console.log(rows);
+    });
+
+    res.redirect('/schedules/new');
+    
+    
 });
 
 app.get('/users/new', function(req, res){
@@ -142,13 +165,7 @@ app.get('/users/:userId', function (req, res){
 	let ID = parseInt(req.params.userId);
 
     connection.query('SELECT first_name, last_name, email, password FROM users WHERE id = ?;', ID, (err,rows) => {
-        if(err)throw err;
-            
-        
-            // if(rows['0'].first_name === ''){
-            //     console.log('No data from the DB');
-            // }
-            
+        if(err)throw err;      
             res.render('singleUser', {layout: 'index', rows});
     });
     
