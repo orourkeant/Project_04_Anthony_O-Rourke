@@ -30,11 +30,6 @@ connection.connect((err) => {
   console.log('DB Connected!');
 });
 
-//Require the data JSON
-const myData = require('./data');
-const usrData = myData.users; //Create a users object from the json 
-const schedData = myData.schedules; //Create a schedule data object from the json
-
 //Loads the handlebars module
 const handlebars = require('express-handlebars');
 
@@ -111,9 +106,6 @@ app.post('/schedules/new', urlencodedParser, function (req, res) {
     let endTimeISOString = dateString.concat('', endTime);
 
     const records = [Number(req.body.user_id), day, startTimeISOString, endTimeISOString];
-    console.log('records: ', records);
-
-    console.log('Body: ', req.body);
 
     connection.query('INSERT INTO schedules ( user_id, day, start_time, end_time ) VALUES (?);', [records], (err,rows) => {
         if(err) throw err;              
@@ -121,8 +113,6 @@ app.post('/schedules/new', urlencodedParser, function (req, res) {
     });
 
     res.redirect('/schedules/new');
-    
-    
 });
 
 app.get('/users/new', function(req, res){
@@ -141,17 +131,17 @@ app.post('/users/new', function(req, res){
 	const encryptPassword = crypto.createHash('sha256').update(pass).digest('base64');
     
     //Escape the name inputs
-    fName =validator.escape(fName);
+    fName = validator.escape(fName);
     lName = validator.escape(lName);
 
     //If the email is valid, insert the new user to the DB
     if(validator.isEmail(email)){
         //Create an array for inserting the variables to the query
         const records = [fName, lName, email, encryptPassword];
-            connection.query('INSERT INTO users (first_name, last_name, email, password) VALUES (?);', [records], (err,rows) => {
-                if(err) throw err;              
-                console.log(rows);
-            });
+        connection.query('INSERT INTO users (first_name, last_name, email, password) VALUES (?);', [records], (err,rows) => {
+            if(err) throw err;              
+            console.log(rows);
+        });
     }
     
     //Redirect back to the get route
@@ -167,8 +157,7 @@ app.get('/users/:userId', function (req, res){
     connection.query('SELECT first_name, last_name, email, password FROM users WHERE id = ?;', ID, (err,rows) => {
         if(err)throw err;      
             res.render('singleUser', {layout: 'index', rows});
-    });
-    
+    });    
 });
 
 app.get('/users/:userId/schedules', function (req, res){
@@ -182,7 +171,6 @@ app.get('/users/:userId/schedules', function (req, res){
             console.log(rows);
             res.render('singleSched', {layout: 'index', rows});
     });
-
 
 });
 
