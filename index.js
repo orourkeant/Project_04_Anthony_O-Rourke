@@ -5,7 +5,7 @@ const express = require('express');
 require('dotenv').config();
 
 //Require bodyparser
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 
 //Require validator for validating form data
 const validator = require('validator');
@@ -15,7 +15,9 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 //Creates our express server
 const app = express();
-const port = 3000;
+const port = process.env.DB_PORT;
+
+const indexRouter = require('./routes/index');
 
 //Setup the DB
 const mysql = require('mysql2');
@@ -38,7 +40,7 @@ const handlebars = require('express-handlebars');
 //Sets our app to use the handlebars engine
 app.set('view engine', 'hbs');
 
-//Sets handlebars configurations (we will go through them later on)
+//Sets handlebars configurations
 app.engine('hbs', handlebars({
     layoutsDir: __dirname + '/views/layouts',
     extname: 'hbs',
@@ -47,14 +49,12 @@ app.engine('hbs', handlebars({
     }));
 
 //Serves static files (we need it to import a css file)
-app.use(express.static('public'));
+app.use(express.static('./public'));
 app.use(urlencodedParser);
 
-//Serves the body of the page aka "main.hbs" to the container "index.hbs"
-app.get('/', (req, res) => {
-    //Using the index.hbs file
-    res.render('main', {layout: 'index'});
-});
+// Pulls the main route from the ./routes/index.js file
+app.use('/', indexRouter);
+
 
 //Serves the body of the page aka "userList.hbs" to the container "index.hbs"
 app.get('/users', (req, res) => {
