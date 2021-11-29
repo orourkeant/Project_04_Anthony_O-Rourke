@@ -10,14 +10,16 @@ const bodyParser = require('body-parser');
 //Require validator for validating form data
 const validator = require('validator');
 
+//Connect to r./routes/index.js
+const indexRouter = require('./routes/index');
+const userRouter = require('./routes/users');
+
 // Create application/x-www-form-urlencoded parser
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 //Creates our express server
 const app = express();
-const port = process.env.DB_PORT;
-
-const indexRouter = require('./routes/index');
+const port = process.env.PORT;
 
 //Setup the DB
 const mysql = require('mysql2');
@@ -25,7 +27,8 @@ const connection = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT
 });
 connection.connect((err) => {
   if (err) throw err;
@@ -34,6 +37,7 @@ connection.connect((err) => {
 
 //Loads the handlebars module
 const handlebars = require('express-handlebars');
+const router = require('./routes/users');
 
 //app.enable('strict routing');
 
@@ -52,20 +56,9 @@ app.engine('hbs', handlebars({
 app.use(express.static('./public'));
 app.use(urlencodedParser);
 
-// Pulls the main route from the ./routes/index.js file
+// Pull the routes from the ./routes/
+app.use('/users', userRouter);
 app.use('/', indexRouter);
-
-
-//Serves the body of the page aka "userList.hbs" to the container "index.hbs"
-app.get('/users', (req, res) => {
-    
-    connection.query('SELECT first_name, last_name, email, password FROM users ORDER BY id;', (err,rows) => {
-        if(err) throw err;
-            //Using the index.hbs file
-        res.render('userList', {layout: 'index', rows});
-    });
-    
-});
 
 //Serves the body of the page aka "schedList.hbs" to the container "index.hbs"
 app.get('/schedules', (req, res) => {
@@ -148,31 +141,5 @@ app.post('/users/new', function(req, res){
     res.redirect('/users/new');
 });
 
-//Had to move the parameterised route underneath the new routes
-//Handle individual user routes if they exist, send error message if not...
-app.get('/users/:userId', function (req, res){
-	
-	let ID = parseInt(req.params.userId);
-
-    connection.query('SELECT first_name, last_name, email, password FROM users WHERE id = ?;', ID, (err,rows) => {
-        if(err)throw err;      
-            res.render('singleUser', {layout: 'index', rows});
-    });    
-});
-
-app.get('/users/:userId/schedules', function (req, res){
-    // check that the parameter value has a match as an array value in the users
-    // section of the JSON file
-    let ID = parseInt(req.params.userId);
-
-    connection.query('SELECT user_id, day, start_time, end_time FROM schedules WHERE user_id = ?;', ID, (err,rows) => {
-        if(err) throw err;
-            //Using the index.hbs file
-            console.log(rows);
-            res.render('singleSched', {layout: 'index', rows});
-    });
-
-});
-
-//Makes the app listen to port 3000
+//Makes the app listen to port 3000 as defined in .env file
 app.listen(port, () => console.log(`App listening to port ${port}`));
