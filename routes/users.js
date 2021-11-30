@@ -5,6 +5,9 @@ const router = express.Router();
 //Require .env
 require('dotenv').config();
 
+//Require validator for validating form data
+const validator = require('validator');
+
 //Setup the DB
 const mysql = require('mysql2');
 const connection = mysql.createConnection({
@@ -29,7 +32,41 @@ router.get('/', (req, res) => {
         res.render('userList', {layout: 'index', rows});
     });  
 });
+router.get('/new', function(req, res){
+    res.render('userForm', {layout: 'index'});
+});
 
+router.post('/new', function(req, res){
+    //Trim the input data
+    let fName = validator.trim(req.body.firstname);
+    let lName = validator.trim(req.body.lastname);
+    let email = validator.trim(req.body.email);
+    let pass = validator.trim(req.body.password);
+    
+    //handle the password encryption
+    const crypto = require('crypto');
+	const encryptPassword = crypto
+                                    .createHash('sha256')
+                                    .update(pass)
+                                    .digest('base64');
+    
+    //Escape the name inputs
+    fName = validator.escape(fName);
+    lName = validator.escape(lName);
+
+    //If the email is valid, insert the new user to the DB
+    if(validator.isEmail(email)){
+        //Create an array for inserting the variables to the query
+        const records = [fName, lName, email, encryptPassword];
+        connection.query('INSERT INTO users (first_name, last_name, email, password) VALUES (?);', [records], (err,rows) => {
+            if(err) throw err;              
+            console.log(rows);
+        });
+    }
+    
+    //Redirect back to the get route
+    res.redirect('/new');
+});
 // //Had to move the parameterised route underneath the new routes
 // //Handle individual user routes if they exist, send error message if not...
 router.get('/:userId', function (req, res){
