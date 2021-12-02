@@ -2,8 +2,8 @@
 const express = require('express');
 const router = express.Router();
 
-//Require .env
-require('dotenv').config();
+// Get connection from here until all queries moved to /models
+const connection = require('../models/DBSetup');
 
 //Require bodyparser
 const bodyParser = require('body-parser');
@@ -14,22 +14,6 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 //Require validator for validating form data
 const validator = require('validator');
 
-//Setup the DB
-const mysql = require('mysql2');
-const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
-});
-connection.connect((err) => {
-  if (err) throw err;
-  console.log('DB Connected!');
-});
-
-//^^ Duplication here with DB, needs to be removed later, maybe export from the main index.js
-
 //Serves the body of the page aka "schedList.hbs" to the container "index.hbs"
 router.get('/', (req, res) => {
     
@@ -39,6 +23,7 @@ router.get('/', (req, res) => {
             console.log(rows);
             res.render('schedList', {layout: 'index', rows});
     });  
+    //res.render('schedList', {layout: 'index', rows});
 });
 
 
