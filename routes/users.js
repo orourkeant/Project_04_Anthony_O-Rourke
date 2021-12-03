@@ -5,19 +5,22 @@ const router = express.Router();
 // Get connection from here until all queries moved to /models
 const connection = require("../models/DBSetup");
 
-//Require the usersModel
-const { User } = require("../models/usersModel");
-
 //Require validator for validating form data
 const validator = require("validator");
 
-router.get("/", async function(req, res) {
+//Require the usersModel
+const { User } = require("../models/usersModel");
+
+router.get("/", async function (req, res) {
   //Runs the function in usersModel.js
-  User.getAllUsers().then((users) => {
-    console.log("Blah!", users);
-    //Serves the body of the page aka "userList.hbs" to the container "index.hbs"
-    res.render("userList", { layout: "index", users });
-  });
+  User.getAllUsers()
+    .then((users) => {
+      //Serves the body of the page aka "userList.hbs" to the container "index.hbs"
+      res.render("userList", { layout: "index", users });
+    })
+    .catch((err) => {
+      res.send("There was an error getting all users");
+    });
 });
 
 router.get("/new", function (req, res) {
@@ -46,47 +49,43 @@ router.post("/new", function (req, res) {
   if (validator.isEmail(email)) {
     //Create an array for inserting the variables to the query
     const records = [fName, lName, email, encryptPassword];
-    connection.query(
-      "INSERT INTO users (first_name, last_name, email, password) VALUES (?);",
-      [records],
-      (err, rows) => {
-        if (err) throw err;
-        console.log(rows);
-      }
-    );
-  }
 
-  //Redirect back to the get route
-  res.redirect("/new");
+    User.createANewUser(records).then(() => {
+        console.log('User created successfully!');
+        res.redirect("/users/new"); //Won't go to /users automatically
+      })
+      .catch((err) => {
+        res.send("There was an error creating a new user");
+      });
+  }
 });
+
 // //Had to move the parameterised route underneath the new routes
 // //Handle individual user routes if they exist, send error message if not...
-router.get("/:userId", function (req, res) {
+router.get("/:userId", async function (req, res) {
   let ID = parseInt(req.params.userId);
 
-  connection.query(
-    "SELECT first_name, last_name, email, password FROM users WHERE id = ?;",
-    ID,
-    (err, rows) => {
-      if (err) throw err;
-      res.render("singleUser", { layout: "index", rows });
-    }
-  );
+  //Runs the function in usersModel.js
+  User.getUsersByID(ID)
+    .then((user) => {
+      //Serves the body of the page aka "singleUser.hbs" to the container "index.hbs"
+      res.render("singleUser", { layout: "index", user });
+    })
+    .catch((err) => {
+      res.send("There was an error getting this user");
+    });
 });
 
 router.get("/:userId/schedules", function (req, res) {
   let ID = parseInt(req.params.userId);
-
-  connection.query(
-    "SELECT user_id, day, start_time, end_time FROM schedules WHERE user_id = ?;",
-    ID,
-    (err, rows) => {
-      if (err) throw err;
-      //Using the index.hbs file
-      console.log(rows);
-      res.render("singleSched", { layout: "index", rows });
-    }
-  );
+  User.getSchedulesForAUserByID(ID)
+    .then((userSchedule) => {
+      //Serves the body of the page aka "singleSched.hbs" to the container "index.hbs"
+      res.render("singleSched", { layout: "index", userSchedule });
+    })
+    .catch((err) => {
+      res.send("There was an error getting this user");
+    });
 });
 
 module.exports = router;
