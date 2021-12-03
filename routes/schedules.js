@@ -2,9 +2,6 @@
 const express = require('express');
 const router = express.Router();
 
-// Get connection from here until all queries moved to /models
-const connection = require('../models/DBSetup');
-
 //Require bodyparser
 const bodyParser = require('body-parser');
 
@@ -57,9 +54,6 @@ router.post('/new', urlencodedParser, function (req, res) {
         console.log("Schedule created successfully!");
         res.redirect("/schedules/new"); //Won't go to /schedules automatically
     }).catch((err) => {
-         console.log(err); //h
-         console.log("Err is a: ", typeof err);
-         console.log("Err keys: ", Object.keys(err));
         res.send("There was an error creating a new schedule");
     });
 });

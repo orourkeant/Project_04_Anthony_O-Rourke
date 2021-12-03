@@ -54,9 +54,6 @@ router.post("/new", function (req, res) {
         res.redirect("/users/new"); //Won't go to /users automatically
       })
       .catch((err) => {
-        // console.log(err);
-        // console.log("Err is a: ", typeof err);
-        // console.log("Err keys: ", Object.keys(err));
         if (err.code === "ER_DUP_ENTRY") {
           res.send("email address already in use");
         } else {
