@@ -13,17 +13,15 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 
 //Require validator for validating form data
 const validator = require('validator');
+const { Schedule } = require('../models/schedulesModel');
 
 //Serves the body of the page aka "schedList.hbs" to the container "index.hbs"
-router.get('/', (req, res) => {
-    
-    connection.query('SELECT user_id, day, start_time, end_time FROM schedules order by user_id;', (err,rows) => {
-        if(err) throw err;
-            //Using the index.hbs file
-            console.log(rows);
-            res.render('schedList', {layout: 'index', rows});
-    });  
-    //res.render('schedList', {layout: 'index', rows});
+router.get('/', (req, res) => { 
+    Schedule.getAllSchedules().then((schedules) =>{
+        res.render('schedList', {layout: 'index', schedules});
+    }).catch((err) =>{
+        res.send("There was an error getting all schedules");
+    });
 });
 
 
@@ -55,12 +53,15 @@ router.post('/new', urlencodedParser, function (req, res) {
 
     const records = [Number(req.body.user_id), day, startTimeISOString, endTimeISOString];
 
-    connection.query('INSERT INTO schedules ( user_id, day, start_time, end_time ) VALUES (?);', [records], (err,rows) => {
-        if(err) throw err;              
-        console.log(rows);
+    Schedule.createANewSchedule(records).then(() => {
+        console.log("Schedule created successfully!");
+        res.redirect("/schedules/new"); //Won't go to /schedules automatically
+    }).catch((err) => {
+         console.log(err); //h
+         console.log("Err is a: ", typeof err);
+         console.log("Err keys: ", Object.keys(err));
+        res.send("There was an error creating a new schedule");
     });
-
-    res.redirect('/new');
 });
 
 module.exports = router;
