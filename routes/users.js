@@ -2,9 +2,6 @@
 const express = require("express");
 const router = express.Router();
 
-// Get connection from here until all queries moved to /models
-const connection = require("../models/DBSetup");
-
 //Require validator for validating form data
 const validator = require("validator");
 
@@ -47,16 +44,28 @@ router.post("/new", function (req, res) {
 
   //If the email is valid, insert the new user to the DB
   if (validator.isEmail(email)) {
+    console.log("Valid Email address!");
     //Create an array for inserting the variables to the query
     const records = [fName, lName, email, encryptPassword];
 
-    User.createANewUser(records).then(() => {
-        console.log('User created successfully!');
+    User.createANewUser(records)
+      .then(() => {
+        console.log("User created successfully!");
         res.redirect("/users/new"); //Won't go to /users automatically
       })
       .catch((err) => {
-        res.send("There was an error creating a new user");
+        // console.log(err);
+        // console.log("Err is a: ", typeof err);
+        // console.log("Err keys: ", Object.keys(err));
+        if (err.code === "ER_DUP_ENTRY") {
+          res.send("email address already in use");
+        } else {
+          res.send("There was an error creating a new user");
+        }
       });
+  } else {
+    console.log("Invalid Email address!");
+    res.send("Invalid Email address!");
   }
 });
 
