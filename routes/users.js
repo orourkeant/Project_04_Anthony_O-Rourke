@@ -7,6 +7,8 @@ const validator = require("validator");
 
 //Require the usersModel
 const { User } = require("../models/usersModel");
+//Require the crypto
+const { Crypto } = require("../tools/encrypt");
 
 router.get("/", async function (req, res) {
   //Runs the function in usersModel.js
@@ -32,11 +34,7 @@ router.post("/new", function (req, res) {
   let pass = validator.trim(req.body.password);
 
   //handle the password encryption
-  const crypto = require("crypto");
-  const encryptPassword = crypto
-    .createHash("sha256")
-    .update(pass)
-    .digest("base64");
+  const encryptPassword = Crypto.hashThis(pass);
 
   //Escape the name inputs
   fName = validator.escape(fName);

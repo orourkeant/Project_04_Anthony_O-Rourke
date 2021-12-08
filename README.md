@@ -10,5 +10,6 @@ This project requires .env to set up variables for DB connection and port assign
     DB_NAME=yourDBName
     DB_PORT=3306
     PORT=3000
+    TOKEN_SECRET=yourTokenSecret
 
 TODO: Add DB Schema info
