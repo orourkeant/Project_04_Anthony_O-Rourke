@@ -11,6 +11,7 @@ const bodyParser = require("body-parser");
 const indexRouter = require("./routes/index");
 const userRouter = require("./routes/users");
 const scheduleRouter = require("./routes/schedules");
+const loginRouter = require("./routes/login");
 
 // Create application/x-www-form-urlencoded parser
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
@@ -48,6 +49,7 @@ app.use(urlencodedParser);
 app.use("/users", userRouter);
 app.use("/", indexRouter);
 app.use("/schedules", scheduleRouter);
+app.use('/login', loginRouter);
 
 //Makes the app listen to port 3000 as defined in .env file
 app.listen(port, () => console.log(`App listening to port ${port}`));
